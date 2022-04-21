@@ -1,9 +1,7 @@
 import invariant from 'invariant'
 import React from 'react'
 import { isValidElementType } from 'react-is'
-import createReactClass from 'create-react-class'
 import { array, func, object } from 'prop-types'
-
 import getRouteParams from './getRouteParams'
 import { ContextProvider } from './ContextUtils'
 import { isReactChildren } from './RouteUtils'
@@ -12,39 +10,49 @@ import { isReactChildren } from './RouteUtils'
  * A <RouterContext> renders the component tree for a given router state
  * and sets the history object and the current location in context.
  */
-const RouterContext = createReactClass({
-  displayName: 'RouterContext',
 
-  mixins: [ ContextProvider('router') ],
+function makeContextName(name) {
+  return `@@contextSubscriber/${name}`
+}
 
-  propTypes: {
-    router: object.isRequired,
-    location: object.isRequired,
-    routes: array.isRequired,
-    params: object.isRequired,
-    components: array.isRequired,
-    createElement: func.isRequired
-  },
+const contextName = makeContextName('router')
+const listenersKey = `${contextName}/listeners`
+const eventIndexKey = `${contextName}/eventIndex`
+const subscribeKey = `${contextName}/subscribe`
 
-  getDefaultProps() {
-    return {
-      createElement: React.createElement
-    }
-  },
+export const Ctx = React.createContext(contextName)
 
-  childContextTypes: {
-    router: object.isRequired
-  },
-
-  getChildContext() {
-    return {
-      router: this.props.router
-    }
-  },
-
+class RouterContext extends React.Component {
   createElement(component, props) {
     return component == null ? null : this.props.createElement(component, props)
-  },
+  }
+
+  UNSAFE_componentWillMount() {
+    this[listenersKey] = []
+    this[eventIndexKey] = 0
+  }
+
+  // this method will be updated to UNSAFE_componentWillReceiveProps below for React versions >= 16.3
+  UNSAFE_componentWillReceiveProps() {
+    this[eventIndexKey]++
+  }
+
+  componentDidUpdate() {
+    this[listenersKey].forEach(listener =>
+      listener(this[eventIndexKey])
+    )
+  }
+
+  [subscribeKey](listener) {
+    // No need to immediately call listener here.
+    this[listenersKey].push(listener)
+
+    return () => {
+      this[listenersKey] = this[listenersKey].filter(item =>
+        item !== listener
+      )
+    }
+  }
 
   render() {
     const { location, routes, params, components, router } = this.props
@@ -93,7 +101,11 @@ const RouterContext = createReactClass({
           return elements
         }
 
-        return this.createElement(components, props)
+        return (
+          <Ctx.Provider value={{ ...props }}>
+            {this.createElement(components, props)}
+          </Ctx.Provider>
+        )
       }, element)
     }
 
@@ -102,9 +114,25 @@ const RouterContext = createReactClass({
       'The root route must render a single element'
     )
 
-    return element
+    return (
+      <Ctx.Provider value={{ ...this.props }}>
+        {element}
+      </Ctx.Provider>
+    )
   }
+}
 
-})
+RouterContext.propTypes = {
+  router: object.isRequired,
+  location: object.isRequired,
+  routes: array.isRequired,
+  params: object.isRequired,
+  components: array.isRequired,
+  createElement: func.isRequired
+}
+
+RouterContext.defaultProps = {
+  createElement: React.createElement
+}
 
 export default RouterContext
