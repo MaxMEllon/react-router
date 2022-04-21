@@ -31,8 +31,8 @@ export default function withRouter(WrappedComponent, options) {
     render() {
       return (
         <Ctx.Consumer>
-          {(contxt) => {
-            const router = this.props.router || this.context.router
+          {(context) => {
+            const router = this.props.router || context.router
             if (!router) {
               return <WrappedComponent {...this.props} />
             }
