@@ -4,7 +4,7 @@ import { render, unmountComponentAtNode } from 'react-dom'
 
 import match from '../match'
 import { routerShape } from '../PropTypes'
-import RouterContext from '../RouterContext'
+import RouterContext, { Ctx } from '../RouterContext'
 import { createRouterObject } from '../RouterUtils'
 
 describe('RouterContext', () => {
@@ -34,15 +34,16 @@ describe('RouterContext', () => {
     router = createRouterObject(history, transitionManager, {})
 
     class Component extends React.Component {
-      constructor(props, ctx) {
-        super(props, ctx)
-        context = ctx
+      render() {
+        return (
+          <Ctx.Consumer>
+            {(ctx) => {
+              context = ctx
+              return null
+            }}
+          </Ctx.Consumer>
+        )
       }
-      render() { return null }
-    }
-
-    Component.contextTypes = {
-      router: routerShape.isRequired
     }
 
     routes = { path: '/', component: Component }

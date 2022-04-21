@@ -3,7 +3,6 @@ import React from 'react'
 import { isValidElementType } from 'react-is'
 import { array, func, object } from 'prop-types'
 import getRouteParams from './getRouteParams'
-import { ContextProvider } from './ContextUtils'
 import { isReactChildren } from './RouteUtils'
 
 /**

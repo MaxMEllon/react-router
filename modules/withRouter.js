@@ -2,7 +2,6 @@ import invariant from 'invariant'
 import React from 'react'
 import createReactClass from 'create-react-class'
 import hoistStatics from 'hoist-non-react-statics'
-import { ContextSubscriber } from './ContextUtils'
 import { routerShape } from './PropTypes'
 import  { Ctx } from './RouterContext'
 
